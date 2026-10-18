@@ -1,0 +1,44 @@
+name: Clean one consumed Qwen artifact
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  actions: write
+  issues: write
+  contents: read
+
+jobs:
+  delete-exact-consumed-artifact:
+    if: >-
+      github.event.issue.user.login == github.repository_owner &&
+      github.actor == github.repository_owner &&
+      startsWith(github.event.issue.title, '[qwen-artifact-consumed] ')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify exact artifact name and delete by ID
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$ISSUE_TITLE" =~ ^\[qwen-artifact-consumed\]\ ([0-9]{8,18})$ ]]; then
+            echo "Invalid fixed cleanup syntax" >&2
+            exit 2
+          fi
+          artifact_id="${BASH_REMATCH[1]}"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}" > "$RUNNER_TEMP/artifact.json"
+          jq -e --arg expected "qwen35-0p8b-q4km-gguf-one-shot" '
+            .name == $expected and
+            .expired == false and
+            (.size_in_bytes >= 450000000) and
+            (.size_in_bytes <= 750000000) and
+            .workflow_run.head_branch == "main"
+          ' "$RUNNER_TEMP/artifact.json" >/dev/null
+          gh api -X DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}"
+          gh issue comment "$GITHUB_EVENT_NUMBER" --repo "$GITHUB_REPOSITORY" \
+            --body "Deleted the verified one-shot Qwen GGUF artifact ID ${artifact_id} after Drive handoff."
+          gh issue close "$GITHUB_EVENT_NUMBER" --repo "$GITHUB_REPOSITORY" --reason completed
