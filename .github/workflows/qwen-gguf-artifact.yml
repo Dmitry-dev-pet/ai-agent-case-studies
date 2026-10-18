@@ -73,6 +73,44 @@ jobs:
               json.dumps(manifest, indent=2, sort_keys=True) + "\n",
               encoding="utf-8",
           )
+# The ChatGPT GitHub connector has a strict 512 MiB artifact download cap.
+          # Split into two bounded, individually verifiable delivery artifacts.
+          parts = []
+          chunk_limit = 300_000_000
+          with name.open("rb") as original:
+              for index in range(2):
+                  folder = Path(f"handoff-part-{index}")
+                  folder.mkdir(exist_ok=True)
+                  part_name = f"{filename}.part-{index}"
+                  part_path = folder / part_name
+                  digest = hashlib.sha256()
+                  written = 0
+                  with part_path.open("wb") as target:
+                      while written < chunk_limit:
+                          data = original.read(min(4 * 1024 * 1024, chunk_limit - written))
+                          if not data:
+                              break
+                          target.write(data)
+                          digest.update(data)
+                          written += len(data)
+                  if not 200_000_000 <= written <= chunk_limit:
+                      raise ValueError(f"Unexpected size for part {index}: {written}")
+                  parts.append({
+                      "index": index,
+                      "filename": part_name,
+                      "size_bytes": written,
+                      "sha256": digest.hexdigest(),
+                  })
+              if original.read(1):
+                  raise ValueError("More than two chunks: fail closed")
+          if sum(part["size_bytes"] for part in parts) != size:
+              raise ValueError("Chunk sizes do not add up to GGUF size")
+          manifest["parts"] = parts
+          for index in range(2):
+              Path(f"handoff-part-{index}/manifest.json").write_text(
+                  json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+                  encoding="utf-8",
+              )
           print(json.dumps(manifest, sort_keys=True))
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
               summary.write(
@@ -84,11 +122,20 @@ jobs:
               )
           PY
 
-      - name: Upload only the model and integrity manifest
+      - name: Upload chunk zero and shared integrity manifest
         uses: actions/upload-artifact@v4
         with:
-          name: qwen35-0p8b-q4km-gguf-one-shot
-          path: handoff/
+          name: qwen35-0p8b-q4km-part-0
+          path: handoff-part-0/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+
+      - name: Upload chunk one and shared integrity manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: qwen35-0p8b-q4km-part-1
+          path: handoff-part-1/
           if-no-files-found: error
           compression-level: 0
           retention-days: 1
