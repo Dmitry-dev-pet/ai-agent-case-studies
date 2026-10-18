@@ -1,0 +1,29 @@
+name: Validate Qwen structured-output example
+
+on:
+  push:
+    paths:
+      - "examples/qwen_mesh.gbnf"
+      - "examples/qwen_structured_output.py"
+      - "tests/test_qwen_structured_output.py"
+      - ".github/workflows/qwen-structured-output-tests.yml"
+  pull_request:
+    paths:
+      - "examples/qwen_mesh.gbnf"
+      - "examples/qwen_structured_output.py"
+      - "tests/test_qwen_structured_output.py"
+      - ".github/workflows/qwen-structured-output-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Test JSON action validator (no model download)
+        run: python3 -m unittest discover -s tests -p 'test_qwen_structured_output.py' -v
