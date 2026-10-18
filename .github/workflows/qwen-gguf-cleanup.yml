@@ -23,6 +23,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           set -euo pipefail
           if [[ ! "$ISSUE_TITLE" =~ ^\[qwen-artifact-clean\]\ ([0-9]{8,18})$ ]]; then
@@ -43,6 +44,6 @@ jobs:
             )
           ' "$RUNNER_TEMP/artifact.json" >/dev/null
           gh api -X DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}"
-          gh issue comment "$GITHUB_EVENT_NUMBER" --repo "$GITHUB_REPOSITORY" \
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" \
             --body "Deleted the bounded Qwen GGUF handoff artifact ID ${artifact_id} after Drive handoff."
-          gh issue close "$GITHUB_EVENT_NUMBER" --repo "$GITHUB_REPOSITORY" --reason completed
+          gh issue close "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --reason completed
