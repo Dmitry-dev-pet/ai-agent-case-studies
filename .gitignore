@@ -1,0 +1,6 @@
+# Model weights and transient local inference outputs must not enter public git.
+*.gguf
+*.gguf.*
+__pycache__/
+*.pyc
+*.pyo
