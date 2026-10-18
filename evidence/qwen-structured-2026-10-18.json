@@ -1,0 +1,24 @@
+{
+  "model": "Qwen3.5-0.8B-Q4_K_M",
+  "model_bytes": 590880672,
+  "model_sha256": "be5b3cb8c2f3ebd791349c9c775ea38950f23a2b9e792ca2f0411597dd172988",
+  "engine_sha256": "a93a982329e4ca22083cabfa7c0e8cc7c8bb5b3825c9f27f8979d54fd93d89df",
+  "device": "CPU",
+  "threads": 4,
+  "ctx_size": 1024,
+  "sampling": {
+    "temperature": 0,
+    "seed": 45
+  },
+  "output_constraint": "GBNF grammar (qwen_mesh.gbnf) + Python semantic validation",
+  "output": {
+    "action": "mesh",
+    "teeth_driver": 12,
+    "teeth_driven": 60,
+    "rpm_driver": 120
+  },
+  "verified": true,
+  "elapsed_seconds": 3.59,
+  "prompt_tokens_per_second": 137.4,
+  "generated_tokens_per_second": 36.7
+}
