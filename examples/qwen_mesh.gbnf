@@ -1,0 +1,5 @@
+# Only these four fields, in a fixed order. 12 <= teeth <= 60 and rpm = 120.
+# Distinct tooth counts and other semantic rules are checked by Python.
+root ::= "{" ws "\"action\"" ws ":" ws "\"mesh\"" ws "," ws "\"teeth_driver\"" ws ":" ws teeth ws "," ws "\"teeth_driven\"" ws ":" ws teeth ws "," ws "\"rpm_driver\"" ws ":" ws "120" ws "}"
+teeth ::= "1" [2-9] | [2-5] [0-9] | "60"
+ws ::= [ \t\n]*
