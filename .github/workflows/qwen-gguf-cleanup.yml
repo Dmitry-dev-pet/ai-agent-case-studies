@@ -41,6 +41,9 @@ jobs:
               or
               ((.name == "qwen35-0p8b-q4km-part-0" or .name == "qwen35-0p8b-q4km-part-1") and
                .size_in_bytes >= 200000000 and .size_in_bytes <= 330000000)
+              or
+              (.name == "llama-cli-linux-x86-64-avx2" and
+               .size_in_bytes >= 1000000 and .size_in_bytes <= 30000000)
             )
           ' "$RUNNER_TEMP/artifact.json" >/dev/null
           gh api -X DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}"
