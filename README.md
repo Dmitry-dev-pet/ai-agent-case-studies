@@ -92,6 +92,12 @@ A private local toolset coordinates developer-agent workflows:
 - Knowing when to use a stronger reviewer model and when to delegate bounded implementation.
 - Automation around lint/test/review loops rather than one-shot prompting.
 
+## Case Study: Local Qwen Inference and Constrained JSON (2026-10-18)
+
+A public Qwen3.5-0.8B GGUF was restored from private Google Drive to an ephemeral ChatGPT CPU container and run with a pinned `llama.cpp` binary. **GBNF-constrained JSON output and independent Python validation succeeded**. A bounded one-tool agent calculation also worked, whereas multi-step autonomous planning remained unreliable.
+
+See the [experiment report](docs/qwen-local-cpu-experiment-2026-10-18.md), [runnable example](examples/qwen_structured_output.py), [GBNF grammar](examples/qwen_mesh.gbnf), and [recorded evidence](evidence/qwen-structured-2026-10-18.json). The public repository contains no GGUF weights, personal credentials, or private Drive file identifiers.
+
 ## Public Projects
 
 Related public repositories:
