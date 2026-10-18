@@ -73,7 +73,7 @@ jobs:
               json.dumps(manifest, indent=2, sort_keys=True) + "\n",
               encoding="utf-8",
           )
-# The ChatGPT GitHub connector has a strict 512 MiB artifact download cap.
+          # The ChatGPT GitHub connector has a strict 512 MiB artifact download cap.
           # Split into two bounded, individually verifiable delivery artifacts.
           parts = []
           chunk_limit = 300_000_000
