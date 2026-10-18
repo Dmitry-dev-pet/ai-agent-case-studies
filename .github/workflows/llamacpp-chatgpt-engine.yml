@@ -1,0 +1,67 @@
+name: One-time llama.cpp Linux CPU engine
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/llamacpp-chatgpt-engine.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-llama-cpu:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout immutable upstream llama.cpp source
+        uses: actions/checkout@v4
+        with:
+          repository: ggml-org/llama.cpp
+          ref: 5aeac37a35b44fde4bdffaec9159f2fcb253b622
+          path: upstream
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Build portable Linux x86-64 CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S upstream -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DGGML_NATIVE=OFF \
+            -DGGML_AVX2=ON \
+            -DGGML_FMA=ON \
+            -DLLAMA_CURL=OFF \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DLLAMA_BUILD_TESTS=OFF \
+            -DLLAMA_BUILD_EXAMPLES=ON
+          cmake --build build --target llama-cli --parallel 4
+          test -x build/bin/llama-cli
+          build/bin/llama-cli --version
+          mkdir -p handoff/bin
+          cp build/bin/llama-cli handoff/bin/
+          # Supply any runtime .so dependencies produced by the build.
+          find build/bin -maxdepth 1 -type f -name 'lib*.so*' -exec cp -a {} handoff/bin/ \;
+          cat > handoff/README.txt <<'EOF'
+          Linux x86-64 llama.cpp CLI built from pinned upstream revision
+          5aeac37a35b44fde4bdffaec9159f2fcb253b622
+          Config: Release, GGML_NATIVE=OFF, GGML_AVX2=ON, GGML_FMA=ON
+          No model weights included. Intended for ChatGPT's ephemeral CPU container.
+          EOF
+          (
+            cd handoff/bin
+            sha256sum * > ../SHA256SUMS
+          )
+          du -h handoff/bin/*
+          ldd handoff/bin/llama-cli || true
+
+      - name: Upload verified CPU engine only
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama-cli-linux-x86-64-avx2
+          path: handoff/
+          compression-level: 6
+          if-no-files-found: error
+          retention-days: 1
